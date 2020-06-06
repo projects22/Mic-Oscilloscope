@@ -1,0 +1,128 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=audio
+Library2=core
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=0
+Version=9.801
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: mic scope
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private streamer As AudioStreamer
+	Private buffers As List
+	Private timer1 As Timer
+	Private i, yp=210 As Int
+	
+End Sub
+
+Sub Globals
+
+	Private cvsActivity, cvsGraph As Canvas
+	Private pnlGraph As Panel
+	Dim buf2(62) As Byte
+	Dim base=1 As Byte
+	Private btnY As Button
+	Private btnRun As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	cvsActivity.Initialize(Activity)	' initialize the Canvas for the activity
+	cvsGraph.Initialize(pnlGraph)	' initialize the Canvas for the panel
+	'draw grid
+	cvsGraph.DrawLine(0, 210, 600, 210, Colors.blue, 1dip)
+	cvsGraph.DrawLine(300, 0, 300, 420, Colors.blue, 1dip)
+	pnlGraph.Invalidate
+	
+	If FirstTime Then
+		streamer.Initialize("streamer", 44100, True, 8, streamer. VOLUME_MUSIC)	'44100
+		buffers.Initialize
+		timer1.Initialize("timer1", 1000)
+	End If
+End Sub
+
+Sub display
+	Dim x1, y1, x2, y2, inB As Int
+
+	Private rect1 As Rect
+	rect1.Initialize(0, 0, 600dip, 420dip)
+	cvsGraph.DrawRect(rect1, Colors.Green, True, 3dip)		'refresh screen
+	cvsGraph.DrawLine(0, 210, 600, 210, Colors.blue, 1dip)
+	cvsGraph.DrawLine(300, 0, 300, 420, Colors.blue, 1dip)
+	pnlGraph.Invalidate
+
+	For i=0 To 61
+		If buf2(i)<0 Then 	'convert byte to unsigned char
+			inB=256+buf2(i)
+		Else
+			inB=buf2(i)
+			End If
+
+		x1=i*10-10
+		x2=x1+10
+		y2=83+inB
+		y1=yp
+		cvsGraph.DrawLine(x1, y1, x2, y2, Colors.Red, 3dip)
+		pnlGraph.Invalidate
+		yp=y2
+	Next
+
+End Sub
+
+Sub streamer_RecordBuffer (Buffer() As Byte)
+
+	For i=0 To 61
+		buf2(i)=Buffer(i*base+100)
+	Next
+	display
+
+End Sub
+
+Sub btnY_Click
+	If base=1 Then
+		base=10
+		btnY.Text="Y"
+		Else
+			base=1
+			btnY.Text="Y x 10"
+	End If
+
+End Sub
+
+Sub btnRun_Click
+	If btnRun.Text="Freeze" Then
+		streamer.StopRecording
+		btnRun.Text="Run"
+		Else
+		streamer.StartRecording
+		btnRun.Text="Freeze"
+	End If
+End Sub
+
+Sub Activity_Resume
+	streamer.StartRecording
+	btnRun.Text="Freeze"
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
